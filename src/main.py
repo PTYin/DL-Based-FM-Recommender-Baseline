@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
                         type=str,
-                        default='../config/NFM.yaml',
+                        default='../config_example/NFM.yaml',
                         help='path for configure file')
     args = parser.parse_args()
 
