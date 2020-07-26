@@ -119,7 +119,7 @@ if __name__ == '__main__':
             optimizer.step()
 
         print("Running Epoch {:03d}/{}".format(epoch, config['model']['epochs']),
-              "loss:", loss,
+              "loss:", float(loss),
               "costs:", time.strftime("%H: %M: %S", time.gmtime(time.time() - start_time)))
         sys.stdout.flush()
 
