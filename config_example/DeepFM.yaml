@@ -8,27 +8,29 @@ dataset:
     test: '../data/MovieLens/ml-tag/ml-tag.test.libfm'
 
 model:
-  name: 'NFM'
+  name: 'DeepFM'
   loss_type: 'square_loss'
-  optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
+  optimizer: 'Adam'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
   activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
   epochs: 100
   batch_norm: True  # use batch_norm or not
-  pre_train: False  # whether use the pre-train or not
   save: True  # save model or not
-  model_path: '../saved/NFM/'
-  fm_model_path: '../saved/NFM/FM.pth'
+  model_path: '../saved/DeepFM/'
   gpu: '0'  # gpu ID
   load: True
   evaluation: True
 
 
   hyper_params:
-    learning_rate: 0.05
+    learning_rate: 0.001
     batch_size: 256  # batch size for training
-    dropout: [0.5, 0.2]  # dropout rate for FM and MLP
-    hidden_factors: 64  # predictive factors numbers in the model
-    layers: [64]  # size of layers in MLP model
-    lambda: 0.0  # regularizer for bilinear layers
+    embedding_size: 8
+    dropout_fm: [1.0, 1.0]  # dropout rate for FM
+    dropout_deep: [0.5, 0.5, 0.5]  # dropout rate for MLP, always 1 more integer than deep_layers
+    deep_layers: [32, 32]  # size of layers in MLP model
+    batch_norm_decay: 0.995
+    lambda: 0.01  # regularizer for bilinear layers
+
+evaluation: 'RMSE'  # []
 
 

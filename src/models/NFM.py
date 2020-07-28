@@ -80,7 +80,7 @@ class NFM(nn.Module):
     def forward(self, features, feature_values):
         # Embedding Layer
         nonzero_embed = self.embeddings(features)
-        feature_values = feature_values.unsqueeze(dim=-1)
+        feature_values = feature_values.unsqueeze(dim=2)
         nonzero_embed = nonzero_embed * feature_values
 
         # Bi-Interaction layer

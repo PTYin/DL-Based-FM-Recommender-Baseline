@@ -28,6 +28,9 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = config['model']['gpu']
     torch.backends.cudnn.benchmark = True
 
+    if not os.path.exists(config['model']['model_path']):
+        os.mkdir(config['model']['model_path'])
+
     # ----------------------------------Prepare Dataset----------------------------------
     print('Prepare Dataset')
     features_map = {}
@@ -42,7 +45,8 @@ if __name__ == '__main__':
         valid_dataset = dataset.LibFMDataset(config['dataset']['paths']['valid'], features_map)
         test_dataset = dataset.LibFMDataset(config['dataset']['paths']['test'], features_map)
     train_loader = DataLoader(train_dataset, drop_last=True,
-                              batch_size=config['model']['hyper_params']['batch_size'], shuffle=True, num_workers=4)
+                              batch_size=config['model']['hyper_params']['batch_size'], shuffle=True,
+                              num_workers=config['dataset']['num_workers'])
     valid_loader = DataLoader(valid_dataset,
                               batch_size=config['model']['hyper_params']['batch_size'], shuffle=False, num_workers=0)
     test_loader = DataLoader(test_dataset,
@@ -124,8 +128,6 @@ if __name__ == '__main__':
         sys.stdout.flush()
 
     if config['model']['save']:
-        if not os.path.exists(config['model']['model_path']):
-            os.mkdir(config['model']['model_path'])
         torch.save(model, os.path.join(config['model']['model_path'], '{}.pth'.format(config['model']['name'])))
 
     # ----------------------------------Evaluation----------------------------------

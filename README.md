@@ -15,4 +15,4 @@ python main.py --batch_size=128 --lr=0.05 --hidden_factor=128
 
 ## Notice
 
-If the parameter num_workers of DataLoader is not equal to 0, please make sure exec the program in Shell environment. 
+If the parameter num_workers of DataLoader is not equal to 0, please make sure not exec the program in Windows. 
