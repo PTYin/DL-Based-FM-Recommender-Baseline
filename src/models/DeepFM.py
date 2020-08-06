@@ -24,6 +24,7 @@ class DeepFM(nn.Module):
         self.dropout_deep_layers = [nn.Dropout(dropout_deep[0]),
                                     nn.Dropout(dropout_deep[1]),
                                     nn.Dropout(dropout_deep[1])]
+        self.weight_list = []
 
         # deep layers
         mlp_module = []
@@ -32,6 +33,7 @@ class DeepFM(nn.Module):
         for i in range(len(self.deep_layers_dim)):
             out_dim = self.deep_layers_dim[i]
             mlp_module.append(nn.Linear(in_dim, out_dim))
+            self.weight_list.append(mlp_module[-1].weight)
             in_dim = out_dim
             if self.batch_norm:
                 mlp_module.append(nn.BatchNorm1d(out_dim))
@@ -47,6 +49,7 @@ class DeepFM(nn.Module):
 
         self.deep_layers = nn.Sequential(*mlp_module)
         self.predict_layer = nn.Linear(in_dim+2, 1, bias=True)
+        self.weight_list.append(self.predict_layer.weight)
 
         self._init_weight_()
 

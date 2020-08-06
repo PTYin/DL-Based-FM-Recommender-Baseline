@@ -76,6 +76,16 @@ if __name__ == '__main__':
                           config['model']['batch_norm'],
                           config['model']['hyper_params']['dropout'])
 
+    elif config['model']['name'] == 'DeepFM':  # DeepFM
+        model = models.DeepFM(num_features,
+                              config['model']['hyper_params']['field_size'],
+                              config['model']['hyper_params']['embedding_size'],
+                              config['model']['hyper_params']['dropout_fm'],
+                              config['model']['hyper_params']['deep_layers'],
+                              config['model']['hyper_params']['dropout_deep'],
+                              config['model']['activation_function'],
+                              config['model']['batch_norm'])
+
     if config['model']['load']:
         if os.path.exists(os.path.join(config['model']['model_path'], '{}.pth'.format(config['model']['name']))):
             model = torch.load(
@@ -98,9 +108,10 @@ if __name__ == '__main__':
 
     # ----------------------------------Construct Loss Function----------------------------------
     print('Construct Loss Function')
+    criterion = None
     if config['model']['loss_type'] == 'square_loss':
         criterion = nn.MSELoss(reduction='sum')
-    else:  # log_loss
+    elif config['model']['loss_type'] == 'log_loss':  # log_loss
         criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
     # ----------------------------------Training----------------------------------
@@ -117,7 +128,14 @@ if __name__ == '__main__':
             model.zero_grad()
             prediction = model(features, feature_values)
             loss = criterion(prediction, label)
-            loss += config['model']['hyper_params']['lambda'] * model.embeddings.weight.norm()
+            # ---------l2 regularization---------
+            l2_reg = 0
+            if config['model']['name'] == 'NFM' or config['model']['name'] == 'FM':
+                l2_reg = model.embeddings.weight.norm()
+            elif config['model']['name'] == 'DeepFM':
+                for weight in model.weight_list:
+                    l2_reg += weight.norm()
+            loss += config['model']['hyper_params']['lambda'] * l2_reg
             params = list(model.parameters())
             loss.backward()
             optimizer.step()
