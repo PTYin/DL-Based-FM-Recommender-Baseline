@@ -79,7 +79,7 @@ class DeepFM(nn.Module):
         # Second Order Term
         sum_square_embed = feature_embeddings.sum(dim=1).pow(2)
         square_sum_embed = (feature_embeddings.pow(2)).sum(dim=1)
-        second_order_bias = (0.5 * (sum_square_embed - square_sum_embed)).sum(dim=1)
+        second_order_bias = (0.5 * (sum_square_embed - square_sum_embed)).sum(dim=1).unsqueeze(dim=1)
         second_order_bias = self.dropout_fm_layers[1](second_order_bias)
 
         # -------------Deep Component-------------

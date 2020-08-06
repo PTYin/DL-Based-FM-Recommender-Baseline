@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
                         type=str,
-                        default='../config_example/NFM.yaml',
+                        default='../config_example/DeepFM.yaml',
                         help='path for configure file')
     args = parser.parse_args()
 
@@ -140,8 +140,7 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-        print("Running Epoch {:03d}/{}".format(epoch, config['model']['epochs']),
-              "loss:", float(loss),
+        print("Running Epoch {:03d}/{} loss:{:.3f}".format(epoch, config['model']['epochs'], float(loss)),
               "costs:", time.strftime("%H: %M: %S", time.gmtime(time.time() - start_time)))
         sys.stdout.flush()
 
