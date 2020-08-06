@@ -10,7 +10,7 @@ dataset:
 model:
   name: 'DeepFM'
   loss_type: 'square_loss'
-  optimizer: 'Adam'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
+  optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
   activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
   epochs: 100
   batch_norm: True  # use batch_norm or not
@@ -23,14 +23,13 @@ model:
 
   hyper_params:
     field_size: 3  # field of features
-    learning_rate: 0.001
-    batch_size: 256  # batch size for training
-    embedding_size: 8
-    dropout_fm: [1.0, 1.0]  # dropout rate for FM
+    learning_rate: 0.05
+    batch_size: 512  # batch size for training
+    embedding_size: 64
+    dropout_fm: [0.5, 0.5]  # dropout rate for FM
     dropout_deep: [0.5, 0.5, 0.5]  # dropout rate for MLP, always 1 more integer than deep_layers
     deep_layers: [32, 32]  # size of layers in MLP model
-    batch_norm_decay: 0.995
-    lambda: 0.01  # regularizer for bilinear layers
+    lambda: 0.00  # regularizer for deep layers and prediction layers
 
 evaluation: 'RMSE'  # []
 

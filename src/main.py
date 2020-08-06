@@ -136,7 +136,6 @@ if __name__ == '__main__':
                 for weight in model.weight_list:
                     l2_reg += weight.norm()
             loss += config['model']['hyper_params']['lambda'] * l2_reg
-            params = list(model.parameters())
             loss.backward()
             optimizer.step()
 
