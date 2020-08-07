@@ -17,7 +17,7 @@ model:
   batch_norm: True  # use batch_norm or not
   cin_split_half: False
   save: True  # save model or not
-  model_path: '../saved/DeepFM/'
+  model_path: '../saved/XDeepFM/'
   gpu: '0'  # gpu ID
   load: True
   evaluation: True

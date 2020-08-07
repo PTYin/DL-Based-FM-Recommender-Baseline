@@ -22,9 +22,6 @@ class DeepFM(nn.Module):
         self.biases = nn.Embedding(self.feature_size, 1)
 
         self.dropout_fm_layers = [nn.Dropout(dropout_fm[0]), nn.Dropout(dropout_fm[1])]
-        self.dropout_deep_layers = [nn.Dropout(dropout_deep[0]),
-                                    nn.Dropout(dropout_deep[1]),
-                                    nn.Dropout(dropout_deep[2])]
 
         # deep layers
         # mlp_module = []
