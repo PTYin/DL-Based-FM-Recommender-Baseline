@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
+from layers import MLP
 
 
 class NFM(nn.Module):
     def __init__(self, num_features, num_factors,
-                 act_function, layers, batch_norm, drop_prob, pre_trained_FM):
+                 act_function, layers, batch_norm, drop_prob, l2, pre_trained_FM=None):
         super(NFM, self).__init__()
         """
             num_features: number of features,
@@ -21,6 +22,7 @@ class NFM(nn.Module):
         self.layers = layers
         self.batch_norm = batch_norm
         self.drop_prob = drop_prob
+        self.l2 = l2
         self.pre_trained_FM = pre_trained_FM
 
         self.embeddings = nn.Embedding(num_features, num_factors)
@@ -34,24 +36,20 @@ class NFM(nn.Module):
         self.FM_layers = nn.Sequential(*fm_modules)
 
         # deep layers
-        mlp_module = []
-        in_dim = num_factors
-        for dim in self.layers:
-            out_dim = dim
-            mlp_module.append(nn.Linear(in_dim, out_dim))
-            in_dim = out_dim
 
-            if self.batch_norm:
-                mlp_module.append(nn.BatchNorm1d(out_dim))
-            if self.act_function == 'relu':
-                mlp_module.append(nn.ReLU())
-            elif self.act_function == 'sigmoid':
-                mlp_module.append(nn.Sigmoid())
-            elif self.act_function == 'tanh':
-                mlp_module.append(nn.Tanh())
-
-            mlp_module.append(nn.Dropout(drop_prob[-1]))
-        self.deep_layers = nn.Sequential(*mlp_module)
+        # mlp_module = []
+        # in_dim = num_factors
+        # for dim in self.layers:
+        #     out_dim = dim
+        #     mlp_module.append(nn.Linear(in_dim, out_dim))
+        #     in_dim = out_dim
+        #
+        #     if self.batch_norm:
+        #         mlp_module.append(nn.BatchNorm1d(out_dim))
+        #     mlp_module.append(activation_layer(self.act_function))
+        #
+        #     mlp_module.append(nn.Dropout(drop_prob[-1]))
+        self.deep_layers = MLP(num_factors, self.layers, self.drop_prob, self.act_function, self.batch_norm)
 
         predict_size = layers[-1] if layers else num_factors
         self.prediction = nn.Linear(predict_size, 1, bias=False)
@@ -70,7 +68,7 @@ class NFM(nn.Module):
 
         # init deep layers
         if len(self.layers) > 0:
-            for m in self.deep_layers:
+            for m in self.deep_layers.layers:
                 if isinstance(m, nn.Linear):
                     nn.init.xavier_normal_(m.weight)
             nn.init.xavier_normal_(self.prediction.weight)
@@ -99,3 +97,6 @@ class NFM(nn.Module):
         feature_bias = (feature_bias * feature_values).sum(dim=1)
         fm = fm + feature_bias + self.global_bias
         return fm.view(-1)
+
+    def l2_regularization(self):
+        return self.l2 * self.embeddings.weight.norm()

@@ -1,11 +1,11 @@
 import torch
 from torch import nn
+from layers import MLP
 
 
 class DeepFM(nn.Module):
     def __init__(self, feature_size, field_size,
-                 embedding_size, dropout_fm, deep_layers_dim, dropout_deep, act_function, batch_norm
-                 ):
+                 embedding_size, deep_layers_dim, dropout_fm, dropout_deep, act_function, batch_norm, l2):
         super(DeepFM, self).__init__()
 
         self.feature_size = feature_size
@@ -16,6 +16,7 @@ class DeepFM(nn.Module):
         self.dropout_deep = dropout_deep
         self.act_function = act_function
         self.batch_norm = batch_norm
+        self.l2 = l2
 
         self.embeddings = nn.Embedding(self.feature_size, self.embedding_size)
         self.biases = nn.Embedding(self.feature_size, 1)
@@ -23,33 +24,27 @@ class DeepFM(nn.Module):
         self.dropout_fm_layers = [nn.Dropout(dropout_fm[0]), nn.Dropout(dropout_fm[1])]
         self.dropout_deep_layers = [nn.Dropout(dropout_deep[0]),
                                     nn.Dropout(dropout_deep[1]),
-                                    nn.Dropout(dropout_deep[1])]
-        self.weight_list = []
+                                    nn.Dropout(dropout_deep[2])]
 
         # deep layers
-        mlp_module = []
+        # mlp_module = []
         in_dim = self.field_size * self.embedding_size
-        mlp_module.append(self.dropout_deep_layers[0])
-        for i in range(len(self.deep_layers_dim)):
-            out_dim = self.deep_layers_dim[i]
-            mlp_module.append(nn.Linear(in_dim, out_dim))
-            self.weight_list.append(mlp_module[-1].weight)
-            in_dim = out_dim
-            if self.batch_norm:
-                mlp_module.append(nn.BatchNorm1d(out_dim))
+        # mlp_module.append(self.dropout_deep_layers[0])
+        # for i in range(len(self.deep_layers_dim)):
+        #     out_dim = self.deep_layers_dim[i]
+        #     mlp_module.append(nn.Linear(in_dim, out_dim))
+        #     self.weight_list.append(mlp_module[-1].weight)
+        #     in_dim = out_dim
+        #     if self.batch_norm:
+        #         mlp_module.append(nn.BatchNorm1d(out_dim))
+        #
+        #     mlp_module.append(activation_layer(self.act_function))
+        #
+        #     mlp_module.append(self.dropout_deep_layers[i+1])
 
-            if self.act_function == 'relu':
-                mlp_module.append(nn.ReLU())
-            elif self.act_function == 'sigmoid':
-                mlp_module.append(nn.Sigmoid())
-            elif self.act_function == 'tanh':
-                mlp_module.append(nn.Tanh())
-
-            mlp_module.append(self.dropout_deep_layers[i+1])
-
-        self.deep_layers = nn.Sequential(*mlp_module)
+        self.deep_layers = MLP(in_dim, self.deep_layers_dim, self.dropout_deep, self.act_function, self.batch_norm)
         self.predict_layer = nn.Linear(in_dim+2, 1, bias=True)
-        self.weight_list.append(self.predict_layer.weight)
+        self.weight_list = [self.predict_layer.weight] + self.deep_layers.weight_list
 
         self._init_weight_()
 
@@ -59,7 +54,7 @@ class DeepFM(nn.Module):
         nn.init.uniform_(self.biases.weight, 0.0, 1.0)
 
         # deep layers
-        for m in self.deep_layers:
+        for m in self.deep_layers.layers:
             if isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight)
         nn.init.xavier_normal_(self.predict_layer.weight)
@@ -89,5 +84,11 @@ class DeepFM(nn.Module):
 
         # -------------Concat-------------
         concat_input = torch.cat((first_order_bias, second_order_bias, y_deep), dim=1)
-        out = self.predict_layer(concat_input)
+        out = torch.sigmoid(self.predict_layer(concat_input))
         return out.view(-1)
+
+    def l2_regularization(self):
+        l2_reg = 0
+        for weight in self.weight_list:
+            l2_reg += weight.norm()
+        return self.l2 * l2_reg

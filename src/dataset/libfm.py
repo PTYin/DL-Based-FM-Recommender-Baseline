@@ -20,10 +20,6 @@ class LibFMDataset(data.Dataset):
 
                 # convert features
                 raw = [item.split(':')[0] for item in items[1:]]
-                # self.features.append(
-                #     np.array([feature_map[item] for item in raw]))
-                # self.feature_values.append(np.array(
-                #     [item.split(':')[1] for item in items[1:]], dtype=np.float32))
                 self.features.append(
                     torch.tensor([feature_map[item] for item in raw], dtype=torch.long))
                 self.feature_values.append(torch.tensor(

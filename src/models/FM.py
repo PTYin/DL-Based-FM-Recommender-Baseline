@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class FM(nn.Module):
-    def __init__(self, num_features, num_factors, batch_norm, drop_prob):
+    def __init__(self, num_features, num_factors, batch_norm, drop_prob, l2):
         super(FM, self).__init__()
         """
             num_features: number of features,
@@ -15,6 +15,7 @@ class FM(nn.Module):
         self.num_factors = num_factors
         self.batch_norm = batch_norm
         self.drop_prob = drop_prob
+        self.l2 = l2
 
         self.embeddings = nn.Embedding(num_features, num_factors)
         self.biases = nn.Embedding(num_features, 1)
@@ -47,3 +48,6 @@ class FM(nn.Module):
         feature_bias = (feature_bias * feature_values).sum(dim=1)
         FM = FM + feature_bias + self.bias_
         return FM.view(-1)
+
+    def l2_regularization(self):
+        return self.l2 * self.embeddings.weight.norm()

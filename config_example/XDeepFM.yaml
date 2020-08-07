@@ -8,12 +8,14 @@ dataset:
     test: '../data/MovieLens/ml-tag/ml-tag.test.libfm'
 
 model:
-  name: 'DeepFM'
+  name: 'XDeepFM'
   loss_type: 'square_loss'
   optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
-  activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
+  deep_act: 'relu'  # ['relu', 'sigmoid', 'tanh']
+  cin_act: 'relu'  # ['relu', 'sigmoid', 'tanh']
   epochs: 100
   batch_norm: True  # use batch_norm or not
+  cin_split_half: False
   save: True  # save model or not
   model_path: '../saved/DeepFM/'
   gpu: '0'  # gpu ID
@@ -24,12 +26,12 @@ model:
   hyper_params:
     field_size: 3  # field of features
     learning_rate: 0.05
-    batch_size: 512  # batch size for training
+    batch_size: 2  # batch size for training
     embedding_size: 64
-    dropout_fm: [0.5, 0.5]  # dropout rate for FM
-    dropout_deep: [0.5, 0.5]  # dropout rate for MLP
     deep_layers: [64, 64]  # size of layers in MLP model
-    lambda: 0.00  # regularizer for deep layers and prediction layers
+    cin_layers: [64, 32]
+    dropout_deep: [0.5, 0.5]
+    lambda: 0.001  # regularizer for deep layers and prediction layers
 
 evaluation: 'RMSE'  # []
 

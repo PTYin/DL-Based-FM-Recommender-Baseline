@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
                         type=str,
-                        default='../config_example/DeepFM.yaml',
+                        default='../config_example/XDeepFM.yaml',
                         help='path for configure file')
     args = parser.parse_args()
 
@@ -68,23 +68,39 @@ if __name__ == '__main__':
                            config['model']['hyper_params']['layers'],
                            config['model']['batch_norm'],
                            config['model']['hyper_params']['dropout'],
+                           config['model']['hyper_params']['lambda'],
                            fm_model)
 
     elif config['model']['name'] == 'FM':  # FM
         model = models.FM(num_features,
                           config['model']['hyper_params']['hidden_factors'],
                           config['model']['batch_norm'],
-                          config['model']['hyper_params']['dropout'])
+                          config['model']['hyper_params']['dropout'],
+                          config['model']['hyper_params']['lambda'])
 
     elif config['model']['name'] == 'DeepFM':  # DeepFM
         model = models.DeepFM(num_features,
                               config['model']['hyper_params']['field_size'],
                               config['model']['hyper_params']['embedding_size'],
-                              config['model']['hyper_params']['dropout_fm'],
                               config['model']['hyper_params']['deep_layers'],
+                              config['model']['hyper_params']['dropout_fm'],
                               config['model']['hyper_params']['dropout_deep'],
                               config['model']['activation_function'],
-                              config['model']['batch_norm'])
+                              config['model']['batch_norm'],
+                              config['model']['hyper_params']['lambda'])
+
+    elif config['model']['name'] == 'XDeepFM':
+        model = models.XDeepFM(num_features,
+                               config['model']['hyper_params']['field_size'],
+                               config['model']['hyper_params']['embedding_size'],
+                               config['model']['hyper_params']['deep_layers'],
+                               config['model']['hyper_params']['cin_layers'],
+                               config['model']['cin_split_half'],
+                               config['model']['hyper_params']['dropout_deep'],
+                               config['model']['deep_act'],
+                               config['model']['cin_act'],
+                               config['model']['batch_norm'],
+                               config['model']['hyper_params']['lambda'])
 
     if config['model']['load']:
         if os.path.exists(os.path.join(config['model']['model_path'], '{}.pth'.format(config['model']['name']))):
@@ -129,13 +145,8 @@ if __name__ == '__main__':
             prediction = model(features, feature_values)
             loss = criterion(prediction, label)
             # ---------l2 regularization---------
-            l2_reg = 0
-            if config['model']['name'] == 'NFM' or config['model']['name'] == 'FM':
-                l2_reg = model.embeddings.weight.norm()
-            elif config['model']['name'] == 'DeepFM':
-                for weight in model.weight_list:
-                    l2_reg += weight.norm()
-            loss += config['model']['hyper_params']['lambda'] * l2_reg
+            if model.l2 is not None:
+                loss += model.l2_regularization()
             loss.backward()
             optimizer.step()
 
