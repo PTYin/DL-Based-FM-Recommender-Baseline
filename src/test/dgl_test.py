@@ -1,23 +1,17 @@
-import torch as th
-import numpy as np
-import scipy.sparse as spp
+from layers import NGCFConv
 import dgl
-import networkx as nx
-import matplotlib.pyplot as plt
+import torch
+from torch import nn
+import numpy as np
+import models
 
-# Create a star graph from a pair of arrays (using ``numpy.array`` works too).
-u = th.tensor([0, 0, 0, 0, 0])
-v = th.tensor([1, 2, 3, 4, 5])
-star1 = dgl.DGLGraph((u, v))
 
-# Create the same graph in one go! Essentially, if one of the arrays is a scalar,
-# the value is automatically broadcasted to match the length of the other array
-# -- a feature called *edge broadcasting*.
-start2 = dgl.DGLGraph((0, v))
-
-# Create the same graph from a scipy sparse matrix (using ``scipy.sparse.csr_matrix`` works too).
-adj = spp.coo_matrix((np.ones(len(u)), (u.numpy(), v.numpy())))
-star3 = dgl.DGLGraph(adj)
-
-nx.draw(star1.to_networkx(), with_labels=True)
-plt.show()
+if __name__ == '__main__':
+    model = NGCFConv(3, 5, 'both', True, False, 'LeakyReLu')
+    src = torch.tensor([0, 0, 0, 0, 0])
+    dst = torch.tensor([1, 2, 3, 4, 5])
+    u = np.concatenate([src, dst])
+    v = np.concatenate([dst, src])
+    graph = dgl.DGLGraph((u, v))
+    features = nn.Embedding(6, 3)
+    prediction = model(graph, features.weight)

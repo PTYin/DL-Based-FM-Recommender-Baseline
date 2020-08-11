@@ -43,7 +43,7 @@ class LibFMDataset(data.Dataset):
         return features, feature_values, label
 
     @staticmethod
-    def read_features(file, features: dict):
+    def read_features(file, features: dict, users=None, items=None):
         """ Read features from the given file. """
         i = len(features)
         with open(file, 'r') as fd:

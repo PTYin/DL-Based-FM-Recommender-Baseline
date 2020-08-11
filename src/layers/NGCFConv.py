@@ -2,7 +2,6 @@ import torch as th
 from torch import nn
 from torch.nn import init
 import dgl
-from dgl import function as fn
 from dgl.base import DGLError
 from .activation import activation_layer
 
@@ -43,7 +42,7 @@ class NGCFConv(nn.Module):
                  norm='both',
                  weight=True,
                  bias=False,
-                 activation=None):
+                 activation='LeakyReLu'):
         super(NGCFConv, self).__init__()
         if norm not in ('none', 'both', 'right'):
             raise DGLError('Invalid norm value. Must be either "none", "both" or "right".'
@@ -53,8 +52,8 @@ class NGCFConv(nn.Module):
         self._norm = norm
 
         if weight:
-            self.weight1 = nn.Parameter(th.Tensor(in_feats, out_feats))
-            self.weight2 = nn.Parameter(th.Tensor(in_feats, out_feats))
+            self.weight1 = nn.Parameter(th.Tensor(in_feats, out_feats))  # (d, e)
+            self.weight2 = nn.Parameter(th.Tensor(in_feats, out_feats))  # (d, e)
         else:
             self.register_parameter('weight', None)
 
@@ -75,6 +74,21 @@ class NGCFConv(nn.Module):
             init.xavier_uniform_(self.weight2)
         if self.bias is not None:
             init.zeros_(self.bias)
+
+    def message(self, edges):
+        interaction1 = edges.src['h'] @ self.weight1
+        interaction2 = (edges.src['h'] * edges.dst['h']) @ self.weight2
+        interaction = interaction1 + interaction2  # shape: (|E|, e)
+        weight_decay = (edges.src['deg'] ** 0.5 * edges.dst['deg'] ** 0.5).unsqueeze(dim=1)
+        interaction = interaction / weight_decay  # normalized
+        return {'msg': interaction}
+
+    def aggregation(self, nodes):
+        mailbox = nodes.mailbox['msg']
+        embed = nodes.data['h'] @ self.weight1 + nodes.mailbox['msg'].sum(dim=1)
+        if self._activation is not None:
+            embed = self._activation(embed)
+        return {'embed': embed}
 
     def forward(self, graph: dgl.DGLGraph, feat, weight=None):
         r"""Compute graph convolution.
@@ -101,50 +115,16 @@ class NGCFConv(nn.Module):
         torch.Tensor
             The output feature
         """
+        # add graph features
         graph = graph.local_var()
+        graph.ndata['h'] = feat
+        graph.ndata['deg'] = graph.out_degrees().float().clamp(min=1)
 
-        # normalize
-        if self._norm == 'both':
-            degrees = graph.out_degrees().to(feat.device).float().clamp(min=1)
-            norm = th.pow(degrees, -0.5)
-            shp = norm.shape + (1,) * (feat.dim() - 1)
-            norm = th.reshape(norm, shp)
-            feat = feat * norm
+        # message passing
 
-        # name weight
-        weight1 = self.weight1
-        weight2 = self.weight2
-
-        # def message_func(edges):
-        #     dst_data = edges.dst['h']
-        #     src_data = edges.src['h']
-        #     return_data = dst_data * src_data
-        #     return {'inner_multi': return_data}
-
-        # prob
-        graph.srcdata['h'] = feat
-        graph.update_all(fn.copy_u('h', out='copy'),
-                         fn.sum(msg='copy', out='copy_sum'))
-        graph.update_all(lambda edges: {'inner_multi': edges.src['h'] * edges.dst['h']},
-                         fn.sum(msg='inner_multi', out='inner_multi_sum'))
-        rst1 = th.matmul(graph.dstdata['copy_sum'], weight1)
-        rst2 = th.matmul(graph.dstdata['inner_multi_sum'], weight2)
-        rst = rst1 + rst2
-
-        if self._norm != 'none':
-            degrees = graph.in_degrees().float().clamp(min=1)
-            if self._norm == 'both':
-                norm = th.pow(degrees, -0.5)
-            else:
-                norm = 1.0 / degrees
-            shp = norm.shape + (1,) * (feat.dim() - 1)
-            norm = th.reshape(norm, shp)
-            rst = rst * norm
-
-        if self._activation is not None:
-            rst = self._activation(rst)
-
-        return rst
+        graph.update_all(message_func=self.message, reduce_func=self.aggregation)
+        print(graph.ndata['embed'])
+        return graph.ndata['embed']
 
     def extra_repr(self):
         """Set the extra representation of the module,
