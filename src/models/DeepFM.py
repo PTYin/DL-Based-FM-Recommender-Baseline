@@ -81,7 +81,7 @@ class DeepFM(nn.Module):
 
         # -------------Concat-------------
         concat_input = torch.cat((first_order_bias, second_order_bias, y_deep), dim=1)
-        out = torch.sigmoid(self.predict_layer(concat_input))
+        out = self.predict_layer(concat_input)
         return out.view(-1)
 
     def l2_regularization(self):

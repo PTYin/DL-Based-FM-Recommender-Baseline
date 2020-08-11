@@ -9,17 +9,17 @@ dataset:
 
 model:
   name: 'XDeepFM'
-  loss_type: 'square_loss'
+  loss_type: 'log_loss'  # ['square_loss', 'log_loss']
   optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
   deep_act: 'relu'  # ['relu', 'sigmoid', 'tanh']
   cin_act: 'relu'  # ['relu', 'sigmoid', 'tanh']
-  epochs: 100
+  epochs: 1
   batch_norm: True  # use batch_norm or not
   cin_split_half: False
   save: True  # save model or not
   model_path: '../saved/XDeepFM/'
   gpu: '0'  # gpu ID
-  load: True
+  load: False
   evaluation: True
 
 

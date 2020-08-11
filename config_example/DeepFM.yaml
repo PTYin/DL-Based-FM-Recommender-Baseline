@@ -9,7 +9,7 @@ dataset:
 
 model:
   name: 'DeepFM'
-  loss_type: 'square_loss'
+  loss_type: 'log_loss'  # ['square_loss', 'log_loss']
   optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
   activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
   epochs: 100

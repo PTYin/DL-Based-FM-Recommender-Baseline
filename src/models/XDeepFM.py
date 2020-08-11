@@ -87,7 +87,7 @@ class XDeepFM(nn.Module):
         cin_out = self.cin_linear(cin_out)
 
         # -------------Prediction-------------
-        return torch.sigmoid(linear_out+deep_out+cin_out+self.global_bias).view(-1)
+        return (linear_out+deep_out+cin_out+self.global_bias).view(-1)
 
     def l2_regularization(self):
         l2_reg = 0

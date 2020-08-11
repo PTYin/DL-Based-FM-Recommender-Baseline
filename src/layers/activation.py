@@ -19,6 +19,8 @@ def activation_layer(act_name):
             act_layer = nn.PReLU()
         elif act_name.lower() == 'tanh':
             act_layer = nn.Tanh()
+        elif act_name.lower() == 'leakyrelu':
+            act_layer = nn.LeakyReLU()
         else:
             raise NotImplementedError
     elif issubclass(act_name, nn.Module):
