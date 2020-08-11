@@ -1,77 +1,67 @@
 import torch
 from torch import nn
-from layers import MLP
+from dgl import DGLGraph
+from layers import NGCFConv
 
 
 class NGCF(nn.Module):
-    def __init__(self, feature_size, field_size,
-                 embedding_size, deep_layers_dim, dropout_fm, dropout_deep, act_function, batch_norm, l2):
+    def __init__(self, node_map, user_bought,
+                 embedding_size, layers_dim, dropout_rate, normalized, l2,
+                 activation='LeakyReLu'):
         super(NGCF, self).__init__()
-
-        self.feature_size = feature_size
-        self.field_size = field_size
+        self.node_map = node_map
+        self.user_bought = user_bought  # {user(int): [item(int), item(int), ...]}
         self.embedding_size = embedding_size
-        self.dropout_fm = dropout_fm
-        self.deep_layers_dim = deep_layers_dim
-        self.dropout_deep = dropout_deep
-        self.act_function = act_function
-        self.batch_norm = batch_norm
+        self.layers_dim = layers_dim
+        self.dropout = dropout_rate
+        self.normalized = normalized
         self.l2 = l2
+        self.activation = activation
 
-        self.embeddings = nn.Embedding(self.feature_size, self.embedding_size)
-        self.biases = nn.Embedding(self.feature_size, 1)
+        self.weight_list = []
 
-        self.dropout_fm_layers = [nn.Dropout(dropout_fm[0]), nn.Dropout(dropout_fm[1])]
+        self.graph = self.construct_graph()
+        # initial embeddings of each nodes in graph
+        self.h0 = nn.Embedding(len(self.node_map), embedding_size)
+        self.convs = nn.ModuleList()
 
-        in_dim = self.field_size * self.embedding_size
+        in_feats = self.embedding_size
+        for i, dim in enumerate(layers_dim):
+            self.convs.append(NGCFConv(in_feats, dim, self.dropout[i], self.normalized, self.activation))
+            self.weight_list += self.convs[-1].weight_list
+            in_feats = dim
 
-        self.deep_layers = MLP(in_dim, self.deep_layers_dim, self.dropout_deep, self.act_function, self.batch_norm)
-        self.predict_layer = nn.Linear(in_dim+2, 1, bias=True)
-        self.weight_list = [self.predict_layer.weight] + self.deep_layers.weight_list
+        self.reset_parameters()
 
-        self._init_weight_()
+    def construct_graph(self):
+        graph = DGLGraph()
+        graph.add_nodes(len(self.node_map))  # |V| = N+M
+        for user, item in enumerate(self.user_bought):
+            graph.add_edges([user, item], [item, user])
+        return graph
 
-    def _init_weight_(self):
+    def reset_parameters(self):
         # embeddings
         nn.init.normal_(self.embeddings.weight, 0.0, 0.01)
-        nn.init.uniform_(self.biases.weight, 0.0, 1.0)
 
-        # deep layers
-        for m in self.deep_layers.layers:
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight)
-        nn.init.xavier_normal_(self.predict_layer.weight)
-
-    def forward(self, features: torch.LongTensor, feature_values: torch.FloatTensor):
+    def forward(self, features, feature_values):
         # -------------Embedding-------------
-        feature_embeddings = self.embeddings(features)
-        feature_values = feature_values.unsqueeze(dim=2)
-        feature_embeddings = feature_embeddings * feature_values
+        users = map(lambda feature: self.node_map[feature[0]], features)  # (batch,)
+        items = map(lambda feature: self.node_map[feature[1]], features)  # (batch,)
 
-        # -------------FM Component-------------
-        # First Order Term
-        feature_bias = self.biases(features)
-        first_order_bias = (feature_bias * feature_values).sum(dim=1)  # 0 dimension is batch
-        first_order_bias = self.dropout_fm_layers[0](first_order_bias)
+        h = [self.h0.weight]
+        for conv in self.convs:
+            h.append(conv(self.graph, h[-1]))
+        h = torch.cat(h, dim=1)  # [(|V|, d^(1)), (|V|, d^(2)), ..., (|V|, d^(l))]
 
-        # Second Order Term
-        sum_square_embed = feature_embeddings.sum(dim=1).pow(2)
-        square_sum_embed = (feature_embeddings.pow(2)).sum(dim=1)
-        second_order_bias = (0.5 * (sum_square_embed - square_sum_embed)).sum(dim=1).unsqueeze(dim=1)
-        second_order_bias = self.dropout_fm_layers[1](second_order_bias)
+        user_embeddings = torch.tensor([h[user] for user in users])
+        item_embeddings = torch.tensor([h[item] for item in items])
 
-        # -------------Deep Component-------------
-
-        deep_input = feature_embeddings.view(-1, self.field_size * self.embedding_size)
-        y_deep = self.deep_layers(deep_input)
-
-        # -------------Concat-------------
-        concat_input = torch.cat((first_order_bias, second_order_bias, y_deep), dim=1)
-        out = self.predict_layer(concat_input)
-        return out.view(-1)
+        return (user_embeddings * item_embeddings).sum(dim=1)
 
     def l2_regularization(self):
         l2_reg = 0
         for weight in self.weight_list:
             l2_reg += weight.norm()
         return self.l2 * l2_reg
+

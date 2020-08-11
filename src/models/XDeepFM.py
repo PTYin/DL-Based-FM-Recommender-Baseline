@@ -48,22 +48,17 @@ class XDeepFM(nn.Module):
         self.weight_list += self.cin.weight_list
         self.weight_list.append(self.cin_linear.weight)
 
-        self._init_weight_()
+        self.reset_parameters()
 
-    def _init_weight_(self):
+    def reset_parameters(self):
         # embeddings
         nn.init.normal_(self.embeddings.weight, 0.0, 0.01)
         nn.init.uniform_(self.biases.weight, 0.0, 1.0)
 
         # deep layers
-        for m in self.deep_layers.layers:
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight)
         nn.init.xavier_normal_(self.deep_linear.weight)
 
         # CIN
-        for m in self.cin.conv1ds:
-            nn.init.xavier_normal_(m.weight)
         nn.init.xavier_normal_(self.cin_linear.weight)
 
     def forward(self, features: torch.LongTensor, feature_values: torch.FloatTensor):

@@ -1,6 +1,6 @@
 torch
 torchvision
-dgl-cu102
+dgl
 pyyaml~=5.3.1
 numpy~=1.18.5
 yaml~=0.2.5

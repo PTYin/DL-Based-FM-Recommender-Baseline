@@ -1,7 +1,7 @@
 dataset:
   # dataset name
   decoder: 'libfm'
-  num_workers: 4
+  num_workers: 0
   paths:
     train: '../data/MovieLens/ml-tag/ml-tag.train.libfm'
     valid: '../data/MovieLens/ml-tag/ml-tag.validation.libfm'

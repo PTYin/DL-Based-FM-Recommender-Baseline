@@ -1,0 +1,33 @@
+dataset:
+  # dataset name
+  decoder: 'libfm'
+  num_workers: 4
+  bipartite: True  # recommendation in bipartite graph
+  paths:
+    train: '../data/MovieLens/ml-tag/ml-tag.train.libfm'
+    valid: '../data/MovieLens/ml-tag/ml-tag.validation.libfm'
+    test: '../data/MovieLens/ml-tag/ml-tag.test.libfm'
+
+model:
+  name: 'NGCF'
+  loss_type: 'square_loss'
+  optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
+  activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
+  normalized: True
+  epochs: 100
+  save: True  # save model or not
+  model_path: '../saved/NGCF/'
+  gpu: '0'  # gpu ID
+  load: False
+  evaluation: True
+
+
+  hyper_params:
+    learning_rate: 0.05
+    batch_size: 2  # batch size for training
+    dropout: [0.1, 0.1]  # dropout rate for each GNN layer
+    embedding_size: 128  # predictive factors numbers in the model
+    layers: [96 64]  # size of layers in GNN layers
+    lambda: 0.0  # regularizer for bilinear layers
+
+

@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import argparse
 import yaml
@@ -25,6 +24,7 @@ if __name__ == '__main__':
         exit(-1)
     config = yaml.load(open(args.config, 'r').read(), Loader=yaml.FullLoader)
     # print(config)
+    os.environ['DGLBACKEND'] = 'pytorch'
     os.environ['CUDA_VISIBLE_DEVICES'] = config['model']['gpu']
     torch.backends.cudnn.benchmark = True
 
@@ -33,17 +33,22 @@ if __name__ == '__main__':
 
     # ----------------------------------Prepare Dataset----------------------------------
     print('Prepare Dataset')
-    features_map = {}
+    feature_map = {}
+    node_map = None
+    user_bought = None
+    if 'bipartite' in config['dataset'] and config['dataset']['bipartite']:
+        node_map = {}
+        user_bought = {}
     num_features = 0
     train_dataset, valid_dataset, test_dataset = None, None, None
     if config['dataset']['decoder'] == 'libfm':
         for file in config['dataset']['paths'].values():
-            dataset.LibFMDataset.read_features(file, features_map)
-        num_features = len(features_map)
+            dataset.LibFMDataset.read_features(file, feature_map, node_map)
+        num_features = len(feature_map)
         print("number of features:", num_features)
-        train_dataset = dataset.LibFMDataset(config['dataset']['paths']['train'], features_map)
-        valid_dataset = dataset.LibFMDataset(config['dataset']['paths']['valid'], features_map)
-        test_dataset = dataset.LibFMDataset(config['dataset']['paths']['test'], features_map)
+        train_dataset = dataset.LibFMDataset(config['dataset']['paths']['train'], feature_map, node_map, user_bought)
+        valid_dataset = dataset.LibFMDataset(config['dataset']['paths']['valid'], feature_map)
+        test_dataset = dataset.LibFMDataset(config['dataset']['paths']['test'], feature_map)
     train_loader = DataLoader(train_dataset, drop_last=True,
                               batch_size=config['model']['hyper_params']['batch_size'], shuffle=True,
                               num_workers=config['dataset']['num_workers'])
@@ -132,6 +137,8 @@ if __name__ == '__main__':
 
     # ----------------------------------Training----------------------------------
     print('Training...')
+    best_result = 100
+    saved = False
     for epoch in range(config['model']['epochs']):
         model.train()
         start_time = time.time()
@@ -140,6 +147,8 @@ if __name__ == '__main__':
             features = features.cuda()
             feature_values = feature_values.cuda()
             label = label.cuda()
+            if config['model']['loss_type'] == 'log_loss':
+                label = label.clamp(min=0., max=1.)
 
             model.zero_grad()
             prediction = model(features, feature_values)
@@ -150,18 +159,22 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-        print("Running Epoch {:03d}/{} loss:{:.3f}".format(epoch, config['model']['epochs'], float(loss)),
+        print("Running Epoch {:03d}/{:03d} loss:{:.3f}".format(epoch, config['model']['epochs'], float(loss)),
               "costs:", time.strftime("%H: %M: %S", time.gmtime(time.time() - start_time)))
-        sys.stdout.flush()
 
-    if config['model']['save']:
+        # ----------------------------------Evaluation----------------------------------
+        if config['model']['evaluation']:
+            model.eval()
+            train_result = metrics.RMSE(model, train_loader)
+            valid_result = metrics.RMSE(model, valid_loader)
+            test_result = metrics.RMSE(model, test_loader)
+            print("\tTrain_RMSE: {:.3f}, Valid_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(train_result, valid_result,
+                                                                                       test_result))
+
+            if test_result < best_result and config['model']['save']:
+                torch.save(model, os.path.join(config['model']['model_path'], '{}.pth'.format(config['model']['name'])))
+                best_result = test_result
+
+    if not saved and config['model']['save']:
         torch.save(model, os.path.join(config['model']['model_path'], '{}.pth'.format(config['model']['name'])))
 
-    # ----------------------------------Evaluation----------------------------------
-    print('Evaluating')
-    if config['model']['evaluation']:
-        model.eval()
-        train_result = metrics.RMSE(model, train_loader)
-        valid_result = metrics.RMSE(model, valid_loader)
-        test_result = metrics.RMSE(model, test_loader)
-        print("Train_RMSE: {:.3f}, Valid_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(train_result, valid_result, test_result))

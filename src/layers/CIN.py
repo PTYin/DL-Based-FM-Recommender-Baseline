@@ -46,8 +46,11 @@ class CIN(nn.Module):
             else:
                 self.field_nums.append(size)
 
-        #         for tensor in self.conv1ds:
-        #             nn.init.normal_(tensor.weight, mean=0, std=init_std)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for m in self.conv1ds:
+            nn.init.xavier_normal_(m.weight)
 
     def forward(self, inputs):
         if len(inputs.shape) != 3:

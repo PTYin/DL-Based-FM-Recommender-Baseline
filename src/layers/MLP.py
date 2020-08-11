@@ -24,6 +24,12 @@ class MLP(nn.Module):
             mlp_module.append(nn.Dropout(dropout_rate[i]))
 
         self.layers = nn.Sequential(*mlp_module)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for m in self.layers:
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight)
 
     def forward(self, embeddings):
         return self.layers(embeddings)

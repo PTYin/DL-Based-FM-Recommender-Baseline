@@ -37,26 +37,14 @@ class NFM(nn.Module):
 
         # deep layers
 
-        # mlp_module = []
-        # in_dim = num_factors
-        # for dim in self.layers:
-        #     out_dim = dim
-        #     mlp_module.append(nn.Linear(in_dim, out_dim))
-        #     in_dim = out_dim
-        #
-        #     if self.batch_norm:
-        #         mlp_module.append(nn.BatchNorm1d(out_dim))
-        #     mlp_module.append(activation_layer(self.act_function))
-        #
-        #     mlp_module.append(nn.Dropout(drop_prob[-1]))
         self.deep_layers = MLP(num_factors, self.layers, self.drop_prob, self.act_function, self.batch_norm)
 
         predict_size = layers[-1] if layers else num_factors
         self.prediction = nn.Linear(predict_size, 1, bias=False)
 
-        self._init_weight_()
+        self.reset_parameters()
 
-    def _init_weight_(self):
+    def reset_parameters(self):
         """ Try to mimic the original weight initialization. """
         if self.pre_trained_FM:
             self.embeddings.weight.data.copy_(self.pre_trained_FM.embeddings.weight)
