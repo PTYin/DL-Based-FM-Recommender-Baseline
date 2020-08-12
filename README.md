@@ -10,7 +10,8 @@ Split the data to train/test/validation files to run the codes directly.
 
 ## Example to Run:
 ```
-python main.py --batch_size=128 --lr=0.05 --hidden_factor=128
+    cd src/
+    python main.py --config ../config_example/NGCF.yaml
 ```
 
 ## Notice
