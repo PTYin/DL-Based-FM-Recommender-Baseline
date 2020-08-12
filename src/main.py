@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import argparse
 import yaml
@@ -120,6 +121,7 @@ if __name__ == '__main__':
             test_result = metrics.RMSE(model, test_loader)
             print("\tTrain_RMSE: {:.3f}, Valid_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(train_result, valid_result,
                                                                                        test_result))
+            sys.stdout.flush()
 
             if test_result < best_result and config['model']['save']:
                 torch.save(model, os.path.join(config['model']['model_path'], '{}.pth'.format(config['model']['name'])))
