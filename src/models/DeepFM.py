@@ -26,21 +26,8 @@ class DeepFM(nn.Module):
         # deep layers
         # mlp_module = []
         in_dim = self.field_size * self.embedding_size
-        # mlp_module.append(self.dropout_deep_layers[0])
-        # for i in range(len(self.deep_layers_dim)):
-        #     out_dim = self.deep_layers_dim[i]
-        #     mlp_module.append(nn.Linear(in_dim, out_dim))
-        #     self.weight_list.append(mlp_module[-1].weight)
-        #     in_dim = out_dim
-        #     if self.batch_norm:
-        #         mlp_module.append(nn.BatchNorm1d(out_dim))
-        #
-        #     mlp_module.append(activation_layer(self.act_function))
-        #
-        #     mlp_module.append(self.dropout_deep_layers[i+1])
-
         self.deep_layers = MLP(in_dim, self.deep_layers_dim, self.dropout_deep, self.act_function, self.batch_norm)
-        self.predict_layer = nn.Linear(in_dim+2, 1, bias=True)
+        self.predict_layer = nn.Linear(self.deep_layers_dim[-1]+2, 1, bias=True)
         self.weight_list = [self.predict_layer.weight] + self.deep_layers.weight_list
 
         self.reset_parameters()

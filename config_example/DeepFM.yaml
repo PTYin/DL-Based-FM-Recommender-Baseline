@@ -23,7 +23,7 @@ model:
 
   hyper_params:
     learning_rate: 0.05
-    batch_size: 512  # batch size for training
+    batch_size: 2  # batch size for training
     embedding_size: 64
     dropout_fm: [0.5, 0.5]  # dropout rate for FM
     dropout_deep: [0.5, 0.5]  # dropout rate for MLP

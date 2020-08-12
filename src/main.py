@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
                         type=str,
-                        default='../config_example/NGCF.yaml',
+                        default='../config_example/DeepFM.yaml',
                         help='path for configure file')
     args = parser.parse_args()
 
