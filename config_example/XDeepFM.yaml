@@ -2,6 +2,7 @@ dataset:
   # dataset name
   decoder: 'libfm'
   num_workers: 0
+  bipartite: True
   paths:
     train: '../data/MovieLens/ml-tag/ml-tag.train.libfm'
     valid: '../data/MovieLens/ml-tag/ml-tag.validation.libfm'
@@ -24,7 +25,6 @@ model:
 
 
   hyper_params:
-    field_size: 3  # field of features
     learning_rate: 0.05
     batch_size: 2  # batch size for training
     embedding_size: 64

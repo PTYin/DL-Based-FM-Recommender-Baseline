@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch.nn import init
 import dgl
-from dgl.base import DGLError
 from .activation import activation_layer
 
 
@@ -62,12 +61,6 @@ class NGCFConv(nn.Module):
         interaction = interaction / weight_decay  # normalized
         return {'msg': interaction}
 
-    def aggregation(self, nodes):
-        # m_{u<-u} + \Sum m_{u<-i}
-        embed = nodes.data['h'] @ self.weight1 + nodes.mailbox['msg'].sum(dim=1)  # shape: (*, e)
-
-        return {'embed': embed}
-
     def forward(self, graph: dgl.DGLGraph, feat):
         r"""Compute graph convolution.
 
@@ -94,11 +87,13 @@ class NGCFConv(nn.Module):
         # add graph features
         graph = graph.local_var()
         graph.ndata['h'] = feat
-        graph.ndata['deg'] = graph.out_degrees().float().clamp(min=1)
+        graph.ndata['deg'] = graph.out_degrees().cuda().float().clamp(min=1)
 
         # message passing
-        graph.update_all(message_func=self.message, reduce_func=self.aggregation)
-        embeds = graph.ndata['embed']
+        graph.update_all(message_func=self.message, reduce_func=dgl.function.sum(msg='msg', out='neighbor_sum'))
+        # m_{u<-u} + \Sum m_{u<-i}
+        embeds = graph.ndata['h'] @ self.weight1 + graph.ndata['neighbor_sum']
+
         if self.bias is not None:
             embeds = embeds + self.bias
         if self.activation is not None:

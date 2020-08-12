@@ -12,7 +12,7 @@ model:
   name: 'NGCF'
   loss_type: 'square_loss'
   optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
-  activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
+  activation_function: 'leakyrelu'  # ['relu', 'sigmoid', 'tanh', 'leakyrelu']
   normalized: True
   epochs: 100
   save: True  # save model or not
@@ -27,7 +27,7 @@ model:
     batch_size: 2  # batch size for training
     dropout: [0.1, 0.1]  # dropout rate for each GNN layer
     embedding_size: 128  # predictive factors numbers in the model
-    layers: [96 64]  # size of layers in GNN layers
+    layers: [96, 64]  # size of layers in GNN layers
     lambda: 0.0  # regularizer for bilinear layers
 
 

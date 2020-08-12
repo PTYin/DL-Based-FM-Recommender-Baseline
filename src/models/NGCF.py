@@ -42,20 +42,22 @@ class NGCF(nn.Module):
 
     def reset_parameters(self):
         # embeddings
-        nn.init.normal_(self.embeddings.weight, 0.0, 0.01)
+        nn.init.normal_(self.h0.weight, 0.0, 0.01)
 
     def forward(self, features, feature_values):
         # -------------Embedding-------------
-        users = map(lambda feature: self.node_map[feature[0]], features)  # (batch,)
-        items = map(lambda feature: self.node_map[feature[1]], features)  # (batch,)
+        users = list(map(lambda feature: self.node_map[int(feature[0])], features))  # (batch,)
+        items = list(map(lambda feature: self.node_map[int(feature[1])], features))  # (batch,)
 
         h = [self.h0.weight]
         for conv in self.convs:
             h.append(conv(self.graph, h[-1]))
         h = torch.cat(h, dim=1)  # [(|V|, d^(1)), (|V|, d^(2)), ..., (|V|, d^(l))]
 
-        user_embeddings = torch.tensor([h[user] for user in users])
-        item_embeddings = torch.tensor([h[item] for item in items])
+        # user_embeddings = torch.tensor([h[user] for user in users])
+        # item_embeddings = torch.tensor([h[item] for item in items])
+        user_embeddings = h[[users]]
+        item_embeddings = h[[items]]
 
         return (user_embeddings * item_embeddings).sum(dim=1)
 

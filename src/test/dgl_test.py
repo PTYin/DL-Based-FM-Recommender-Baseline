@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
-    model = NGCFConv(3, 5)
+    model = NGCFConv(3, 5, dropout=0.0, normalized=True)
     src = torch.tensor([0, 0, 0, 0, 0])
     dst = torch.tensor([1, 2, 3, 4, 5])
     u = np.concatenate([src, dst])
@@ -20,5 +20,9 @@ if __name__ == '__main__':
 
     graph_2 = dgl.DGLGraph(([6, 0, 0, 0, 0, 0], [0, 1, 2, 3, 4, 5]))
     graph_2.add_nodes(1)
-    nx.draw(graph_2.to_networkx(), with_labels=True)
-    plt.show()
+    # nx.draw(graph_2.to_networkx(), with_labels=True)
+    # plt.show()
+    features = nn.Embedding(8, 3)
+    print(features.weight)
+    embed = model(graph_2, features.weight)
+    print(embed)

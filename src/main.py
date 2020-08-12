@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
                         type=str,
-                        default='../config_example/XDeepFM.yaml',
+                        default='../config_example/NGCF.yaml',
                         help='path for configure file')
     args = parser.parse_args()
 
@@ -40,10 +40,11 @@ if __name__ == '__main__':
         node_map = {}
         user_bought = {}
     num_features = 0
+    field_size = 0
     train_dataset, valid_dataset, test_dataset = None, None, None
     if config['dataset']['decoder'] == 'libfm':
         for file in config['dataset']['paths'].values():
-            dataset.LibFMDataset.read_features(file, feature_map, node_map)
+            field_size = dataset.LibFMDataset.read_features(file, feature_map, field_size, node_map)
         num_features = len(feature_map)
         print("number of features:", num_features)
         train_dataset = dataset.LibFMDataset(config['dataset']['paths']['train'], feature_map, node_map, user_bought)
@@ -59,59 +60,8 @@ if __name__ == '__main__':
 
     # ----------------------------------Create Model----------------------------------
     print('Create Model')
-    model = None
-    if config['model']['name'] == 'NFM':  # NFM
-        fm_model = None
-        if config['model']['pre_train']:
-            assert os.path.exists(config['model']['fm_model_path']), 'lack of FM model'
-            assert config.model == 'NFM', 'only support NFM for now'
-            fm_model = torch.load(config['model']['fm_model_path'])
-
-        model = models.NFM(num_features,
-                           config['model']['hyper_params']['hidden_factors'],
-                           config['model']['activation_function'],
-                           config['model']['hyper_params']['layers'],
-                           config['model']['batch_norm'],
-                           config['model']['hyper_params']['dropout'],
-                           config['model']['hyper_params']['lambda'],
-                           fm_model)
-
-    elif config['model']['name'] == 'FM':  # FM
-        model = models.FM(num_features,
-                          config['model']['hyper_params']['hidden_factors'],
-                          config['model']['batch_norm'],
-                          config['model']['hyper_params']['dropout'],
-                          config['model']['hyper_params']['lambda'])
-
-    elif config['model']['name'] == 'DeepFM':  # DeepFM
-        model = models.DeepFM(num_features,
-                              config['model']['hyper_params']['field_size'],
-                              config['model']['hyper_params']['embedding_size'],
-                              config['model']['hyper_params']['deep_layers'],
-                              config['model']['hyper_params']['dropout_fm'],
-                              config['model']['hyper_params']['dropout_deep'],
-                              config['model']['activation_function'],
-                              config['model']['batch_norm'],
-                              config['model']['hyper_params']['lambda'])
-
-    elif config['model']['name'] == 'XDeepFM':
-        model = models.XDeepFM(num_features,
-                               config['model']['hyper_params']['field_size'],
-                               config['model']['hyper_params']['embedding_size'],
-                               config['model']['hyper_params']['deep_layers'],
-                               config['model']['hyper_params']['cin_layers'],
-                               config['model']['cin_split_half'],
-                               config['model']['hyper_params']['dropout_deep'],
-                               config['model']['deep_act'],
-                               config['model']['cin_act'],
-                               config['model']['batch_norm'],
-                               config['model']['hyper_params']['lambda'])
-
-    if config['model']['load']:
-        if os.path.exists(os.path.join(config['model']['model_path'], '{}.pth'.format(config['model']['name']))):
-            model = torch.load(
-                os.path.join(config['model']['model_path'], '{}.pth'.format(config['model']['name'])))
-
+    model = models.create_model(config['model'], num_features, field_size, node_map, user_bought)
+    assert model is not None
     model.cuda()
 
     # ----------------------------------Construct Optimizer----------------------------------

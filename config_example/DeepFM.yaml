@@ -22,7 +22,6 @@ model:
 
 
   hyper_params:
-    field_size: 3  # field of features
     learning_rate: 0.05
     batch_size: 512  # batch size for training
     embedding_size: 64

@@ -28,14 +28,16 @@ class LibFMDataset(data.Dataset):
                 self.label.append(np.float32(items[0]))
                 if node_map is not None and user_bought is not None:
                     if self.label[-1] > 0:
-                        user_bought[node_map[feature_map[raw[0]]]] = node_map[feature_map[raw[1]]]
+                        user = node_map[feature_map[raw[0]]]
+                        item = node_map[feature_map[raw[1]]]
+                        if user not in user_bought:
+                            user_bought[user] = [item]
+                        else:
+                            user_bought[user].append(item)
                 # label = np.float32(1) if float(items[0]) > 0 else np.float32(0)  # positive: 1, negative: 0
                 # self.label.append(label)
 
                 line = fd.readline()
-
-        assert all(len(item) == len(self.features[0]
-                                    ) for item in self.features), 'features are of different length'
 
     def __len__(self):
         return len(self.label)
@@ -47,12 +49,16 @@ class LibFMDataset(data.Dataset):
         return features, feature_values, label
 
     @staticmethod
-    def read_features(file, features: dict, nodes=None):
+    def read_features(file, features: dict, field_size, nodes=None):
         """ Read features from the given file. """
         with open(file, 'r') as fd:
             line = fd.readline()
             while line:
                 items = line.strip().split()
+                if field_size == 0:
+                    field_size = len(items)-1
+                else:
+                    assert field_size == len(items)-1
                 for i, item in enumerate(items[1:]):
                     item = item.split(':')[0]
                     if item not in features:
@@ -60,3 +66,4 @@ class LibFMDataset(data.Dataset):
                         if nodes is not None and (i == 0 or i == 1):
                             nodes[features[item]] = len(nodes)
                 line = fd.readline()
+        return field_size
