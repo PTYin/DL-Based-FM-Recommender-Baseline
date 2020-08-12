@@ -1,38 +1,36 @@
 dataset:
-  # dataset name
   decoder: 'libfm'
   num_workers: 0
+  batch_size: 2  # batch size for training
   bipartite: True
   paths:
-    train: '../data/MovieLens/ml-tag/ml-tag.train.libfm'
-    valid: '../data/MovieLens/ml-tag/ml-tag.validation.libfm'
-    test: '../data/MovieLens/ml-tag/ml-tag.test.libfm'
+    train: 'data/MovieLens/ml-tag/ml-tag.train.libfm'
+    valid: 'data/MovieLens/ml-tag/ml-tag.validation.libfm'
+    test: 'data/MovieLens/ml-tag/ml-tag.test.libfm'
 
 model:
   name: 'XDeepFM'
   loss_type: 'log_loss'  # ['square_loss', 'log_loss']
   optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
-  deep_act: 'relu'  # ['relu', 'sigmoid', 'tanh']
-  cin_act: 'relu'  # ['relu', 'sigmoid', 'tanh']
-  epochs: 1
-  batch_norm: True  # use batch_norm or not
-  cin_split_half: False
+  learning_rate: 0.05
+  epochs: 100
+  steps_per_checkpoint: 100
   save: True  # save model or not
-  model_path: '../saved/XDeepFM/'
+  model_path: 'saved/XDeepFM/'
   gpu: '0'  # gpu ID
   load: False
   evaluation: True
-
+  task: 'rating'
 
   hyper_params:
-    learning_rate: 0.05
-    batch_size: 2  # batch size for training
+    deep_act: 'relu'  # ['relu', 'sigmoid', 'tanh']
+    cin_act: 'relu'  # ['relu', 'sigmoid', 'tanh']
+    batch_norm: True  # use batch_norm or not
+    cin_split_half: False
     embedding_size: 64
     deep_layers: [64, 64]  # size of layers in MLP model
     cin_layers: [64, 32]
     dropout_deep: [0.5, 0.5]
     lambda: 0.001  # regularizer for deep layers and prediction layers
 
-evaluation: 'RMSE'  # []
-
-
+task: 'rating'  # ['rating', 'ranking']

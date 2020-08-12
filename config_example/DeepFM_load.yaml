@@ -14,19 +14,13 @@ model:
   learning_rate: 0.05
   epochs: 100
   steps_per_checkpoint: 100
+  batch_norm: True  # use batch_norm or not
   save: True  # save model or not
   model_path: 'saved/DeepFM/'
   gpu: '0'  # gpu ID
-  load: False
   evaluation: True
-
-  hyper_params:
-    activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
-    batch_norm: True  # use batch_norm or not
-    embedding_size: 64
-    dropout_fm: [0.5, 0.5]  # dropout rate for FM
-    dropout_deep: [0.5, 0.5]  # dropout rate for MLP
-    deep_layers: [64, 64]  # size of layers in MLP model
-    lambda: 0.001  # regularizer for deep layers and prediction layers
+  task: 'rating'
+  load: True
+  load_path: 'saved/DeepFM/DeepFM.pth'
 
 task: 'rating'  # ['rating', 'ranking']

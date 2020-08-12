@@ -1,34 +1,34 @@
 dataset:
-  # dataset name
   decoder: 'libfm'
   num_workers: 4
+  batch_size: 256  # batch size for training
   paths:
-    train: '../data/MovieLens/ml-tag/ml-tag.train.libfm'
-    valid: '../data/MovieLens/ml-tag/ml-tag.validation.libfm'
-    test: '../data/MovieLens/ml-tag/ml-tag.test.libfm'
+    train: 'data/MovieLens/ml-tag/ml-tag.train.libfm'
+    valid: 'data/MovieLens/ml-tag/ml-tag.validation.libfm'
+    test: 'data/MovieLens/ml-tag/ml-tag.test.libfm'
 
 model:
   name: 'NFM'
   loss_type: 'square_loss'
   optimizer: 'Adagrad'  # ['Adagrad', 'Adam', 'SGD', 'Momentum']
-  activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
+  learning_rate: 0.05
   epochs: 100
-  batch_norm: True  # use batch_norm or not
+  steps_per_checkpoint: 100
   pre_train: False  # whether use the pre-train or not
   save: True  # save model or not
-  model_path: '../saved/NFM/'
-  fm_model_path: '../saved/NFM/FM.pth'
+  model_path: 'saved/NFM/'
+  fm_model_path: 'saved/NFM/FM.pth'
   gpu: '0'  # gpu ID
-  load: True
+  load: False
   evaluation: True
-
+  task: 'rating'
 
   hyper_params:
-    learning_rate: 0.05
-    batch_size: 256  # batch size for training
+    activation_function: 'relu'  # ['relu', 'sigmoid', 'tanh', 'identity']
+    batch_norm: True  # use batch_norm or not
     dropout: [0.5, 0.2]  # dropout rate for FM and MLP
     hidden_factors: 64  # predictive factors numbers in the model
     layers: [64]  # size of layers in MLP model
-    lambda: 0.0  # regularizer for bilinear layers
+    lambda: 0.001  # regularizer for bilinear layers
 
-
+task: 'rating'  # ['rating', 'ranking']
