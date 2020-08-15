@@ -148,6 +148,7 @@ def run(config):
             train_result = metrics.RMSE(model, train_loader)
             test_hr, test_ndcg = metrics.metrics(model, test_loader)
             print("Train_RMSE: {:.3f}, Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(train_result, test_hr, test_ndcg))
+        print('------Best Result: {:.3f}------'.format(best_result))
 
     if not saved and config['model']['save']:
         if 'tag' in config:
