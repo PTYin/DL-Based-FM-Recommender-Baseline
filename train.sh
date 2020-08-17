@@ -1,10 +1,10 @@
 #!/bin/bash
 
 cd src/
-embedding_size = $1
-datasets = ("automotive", "books", "clothing", "ml-1m", "office", "ticket")
-models = ("DeepFM", "XDeepFM")
-config_dir = "../config/rating"
+embedding_size=$1
+datasets=("automotive", "books", "clothing", "ml-1m", "office", "ticket")
+models=("DeepFM", "XDeepFM")
+config_dir="../config/rating"
 
 for dataset in ${datasets} do
   for model in ${models} do
@@ -15,3 +15,5 @@ for dataset in ${datasets} do
 #    python app.py --config "${config_dir}/${embedding_size}/${dataset}/${model}" > "/home/share/yinxiangkun/log/libFM/${embedding_size}/${dataset}/${model}.txt"
   done
 done
+
+# Usage: `nohup ./auto_train.sh >> nohup.log 2>&1 &`
