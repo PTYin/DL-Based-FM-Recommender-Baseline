@@ -19,7 +19,7 @@ def run(config):
     torch.backends.cudnn.benchmark = True
 
     if not os.path.exists(config['model']['model_path']):
-        os.mkdir(config['model']['model_path'])
+        os.makedirs(config['model']['model_path'])
 
     # ----------------------------------Prepare Dataset----------------------------------
     print('Prepare Dataset')
