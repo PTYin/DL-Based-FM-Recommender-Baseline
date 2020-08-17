@@ -75,6 +75,24 @@ def run(config):
     elif config['model']['loss_type'] == 'log_loss':  # log_loss
         criterion = nn.BCEWithLogitsLoss(reduction='sum')
 
+    # ---------Model Initial Check---------
+    if config['model']['evaluation']:
+        model.eval()
+        print("Model Initial Check: ", end='')
+        if config['task'] == 'rating':
+            train_result = metrics.RMSE(model, train_loader)
+            test_result = metrics.RMSE(model, test_loader)
+            if valid_dataset is not None:
+                valid_result = metrics.RMSE(model, valid_loader)
+                print("Train_RMSE: {:.3f},".format(train_result),
+                      "Valid_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(valid_result, test_result))
+            else:
+                print("Train_RMSE: {:.3f},".format(train_result), "Test_RMSE: {:.3f}".format(test_result))
+        elif config['task'] == 'ranking':
+            test_hr, test_ndcg = metrics.metrics(model, test_loader)
+            test_result = test_hr
+            print("Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(test_hr, test_ndcg))
+
     # ----------------------------------Training----------------------------------
     print('Training...')
     best_result = 100
