@@ -23,6 +23,7 @@ def run(config):
 
     # ----------------------------------Prepare Dataset----------------------------------
     print('Prepare Dataset')
+    sys.stdout.flush()
     feature_map = {}
     node_map = None
     user_bought = None
@@ -56,6 +57,7 @@ def run(config):
 
     # ----------------------------------Construct Optimizer----------------------------------
     print('Construct Optimizer')
+    sys.stdout.flush()
     optimizer = None
     if config['model']['optimizer'] == 'Adagrad':
         optimizer = optim.Adagrad(model.parameters(), lr=config['model']['learning_rate'],
@@ -69,6 +71,7 @@ def run(config):
 
     # ----------------------------------Construct Loss Function----------------------------------
     print('Construct Loss Function')
+    sys.stdout.flush()
     criterion = None
     if config['model']['loss_type'] == 'square_loss':
         criterion = nn.MSELoss(reduction='sum')
@@ -92,6 +95,7 @@ def run(config):
             test_hr, test_ndcg = metrics.metrics(model, test_loader)
             test_result = test_hr
             print("Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(test_hr, test_ndcg))
+            sys.stdout.flush()
 
     # ----------------------------------Training----------------------------------
     print('Training...')
@@ -127,6 +131,7 @@ def run(config):
                 print(
                     "Running Epoch {:03d}/{:03d} loss:{:.3f}".format(epoch + 1, config['model']['epochs'], float(loss)),
                     "costs:", time.strftime("%H: %M: %S", time.gmtime(time.time() - start_time)))
+                sys.stdout.flush()
 
         # ----------------------------------Validation----------------------------------
         if config['model']['evaluation']:
@@ -162,6 +167,7 @@ def run(config):
                                                    '{}_{}.pth'.format(config['model']['name'], config['tag'])))
                 best_result = test_result
                 saved = True
+            sys.stdout.flush()
 
     # ----------------------------------Evaluation----------------------------------
     if config['model']['evaluation']:
@@ -181,6 +187,7 @@ def run(config):
             test_hr, test_ndcg = metrics.metrics(model, test_loader)
             print("Train_RMSE: {:.3f}, Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(train_result, test_hr, test_ndcg))
         print('------Best Result: ', best_result, '------', sep='')
+        sys.stdout.flush()
 
     if not saved and config['model']['save']:
         if 'tag' in config:
