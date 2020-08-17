@@ -137,16 +137,16 @@ def run(config):
                     model.eval()
                     save_flag = False
                     if config['task'] == 'rating':
-                        train_result = metrics.RMSE(model, train_loader)
+                        # train_result = metrics.RMSE(model, train_loader)
                         test_result = metrics.RMSE(model, test_loader)
                         if valid_dataset is not None:
                             valid_result = metrics.RMSE(model, valid_loader)
                             print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
-                                  "Train_RMSE: {:.3f},".format(train_result),
+                                  # "Train_RMSE: {:.3f},".format(train_result),
                                   "Valid_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(valid_result, test_result))
                         else:
                             print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
-                                  "Train_RMSE: {:.3f},".format(train_result),
+                                  # "Train_RMSE: {:.3f},".format(train_result),
                                   "Test_RMSE: {:.3f}".format(test_result))
 
                         save_flag = test_result < best_result
