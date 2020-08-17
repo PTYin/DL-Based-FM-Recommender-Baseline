@@ -132,42 +132,41 @@ def run(config):
                     "Running Epoch {:03d}/{:03d} loss:{:.3f}".format(epoch + 1, config['model']['epochs'], float(loss)),
                     "costs:", time.strftime("%H: %M: %S", time.gmtime(time.time() - start_time)))
                 sys.stdout.flush()
+                # ----------------------------------Validation----------------------------------
+                if config['model']['evaluation']:
+                    model.eval()
+                    save_flag = False
+                    if config['task'] == 'rating':
+                        train_result = metrics.RMSE(model, train_loader)
+                        test_result = metrics.RMSE(model, test_loader)
+                        if valid_dataset is not None:
+                            valid_result = metrics.RMSE(model, valid_loader)
+                            print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
+                                  "Train_RMSE: {:.3f},".format(train_result),
+                                  "Valid_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(valid_result, test_result))
+                        else:
+                            print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
+                                  "Train_RMSE: {:.3f},".format(train_result),
+                                  "Test_RMSE: {:.3f}".format(test_result))
 
-        # ----------------------------------Validation----------------------------------
-        if config['model']['evaluation']:
-            model.eval()
-            save_flag = False
-            if config['task'] == 'rating':
-                train_result = metrics.RMSE(model, train_loader)
-                test_result = metrics.RMSE(model, test_loader)
-                if valid_dataset is not None:
-                    valid_result = metrics.RMSE(model, valid_loader)
-                    print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
-                          "Train_RMSE: {:.3f},".format(train_result),
-                          "Valid_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(valid_result, test_result))
-                else:
-                    print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
-                          "Train_RMSE: {:.3f},".format(train_result),
-                          "Test_RMSE: {:.3f}".format(test_result))
+                        save_flag = test_result < best_result
+                    elif config['task'] == 'ranking':
+                        test_hr, test_ndcg = metrics.metrics(model, test_loader)
+                        test_result = (test_hr, test_ndcg)
+                        print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
+                              "Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(test_hr, test_ndcg))
 
-                save_flag = test_result < best_result
-            elif config['task'] == 'ranking':
-                test_hr, test_ndcg = metrics.metrics(model, test_loader)
-                test_result = (test_hr, test_ndcg)
-                print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
-                      "Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(test_hr, test_ndcg))
+                        save_flag = test_hr > best_result[0]
+                    else:
+                        test_result = best_result  # No effect, ignore this line
 
-                save_flag = test_hr > best_result[0]
-            else:
-                test_result = best_result  # No effect, ignore this line
-
-            if save_flag and config['model']['save']:
-                if 'tag' in config:
-                    torch.save(model, os.path.join(config['model']['model_path'],
-                                                   '{}_{}.pth'.format(config['model']['name'], config['tag'])))
-                best_result = test_result
-                saved = True
-            sys.stdout.flush()
+                    if save_flag and config['model']['save']:
+                        if 'tag' in config:
+                            torch.save(model, os.path.join(config['model']['model_path'],
+                                                           '{}_{}.pth'.format(config['model']['name'], config['tag'])))
+                        best_result = test_result
+                        saved = True
+                    sys.stdout.flush()
 
     # ----------------------------------Evaluation----------------------------------
     if config['model']['evaluation']:
