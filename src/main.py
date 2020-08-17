@@ -95,7 +95,13 @@ def run(config):
 
     # ----------------------------------Training----------------------------------
     print('Training...')
-    best_result = 100
+    if config['task'] == 'rating':
+        best_result = 100
+    elif config['task'] == 'ranking':
+        best_result = (0, 0)
+    else:
+        best_result = None
+
     saved = False
     for epoch in range(config['model']['epochs']):
         model.train()
@@ -125,6 +131,7 @@ def run(config):
         # ----------------------------------Validation----------------------------------
         if config['model']['evaluation']:
             model.eval()
+            save_flag = False
             if config['task'] == 'rating':
                 train_result = metrics.RMSE(model, train_loader)
                 test_result = metrics.RMSE(model, test_loader)
@@ -137,15 +144,19 @@ def run(config):
                     print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
                           "Train_RMSE: {:.3f},".format(train_result),
                           "Test_RMSE: {:.3f}".format(test_result))
+
+                save_flag = test_result < best_result
             elif config['task'] == 'ranking':
                 test_hr, test_ndcg = metrics.metrics(model, test_loader)
-                test_result = test_hr
+                test_result = (test_hr, test_ndcg)
                 print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
                       "Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(test_hr, test_ndcg))
+
+                save_flag = test_hr > best_result[0]
             else:
                 test_result = best_result  # No effect, ignore this line
 
-            if test_result < best_result and config['model']['save']:
+            if save_flag and config['model']['save']:
                 if 'tag' in config:
                     torch.save(model, os.path.join(config['model']['model_path'],
                                                    '{}_{}.pth'.format(config['model']['name'], config['tag'])))
@@ -169,7 +180,7 @@ def run(config):
             train_result = metrics.RMSE(model, train_loader)
             test_hr, test_ndcg = metrics.metrics(model, test_loader)
             print("Train_RMSE: {:.3f}, Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(train_result, test_hr, test_ndcg))
-        print('------Best Result: {:.3f}------'.format(best_result))
+        print('------Best Result: ', best_result, '------', sep='')
 
     if not saved and config['model']['save']:
         if 'tag' in config:
