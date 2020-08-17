@@ -2,8 +2,8 @@
 
 cd src/
 embedding_size=$1
-datasets=("automotive", "books", "clothing", "ml-1m", "office", "ticket")
-models=("DeepFM", "XDeepFM")
+datasets=("automotive" "books" "clothing" "ml-1m" "office" "ticket")
+models=("DeepFM" "XDeepFM")
 config_dir="../config/rating"
 
 for dataset in ${datasets[@]} do
