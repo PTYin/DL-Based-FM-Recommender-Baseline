@@ -2,12 +2,10 @@
 
 cd src/
 embedding_size=$1
-datasets=("automotive", "books", "clothing", "ml-1m", "office", "ticket")
-models=("DeepFM", "XDeepFM")
 config_dir="../config/rating"
 
-for dataset in ${datasets} do
-  for model in ${models} do
+for dataset in "automotive" "books" "clothing" "ml-1m" "office" "ticket" do
+  for model in "DeepFM" "XDeepFM" do
     if [ ! -d "/home/share/yinxiangkun/log/libFM/${embedding_size}/${dataset}/" ]; then
       mkdir "/home/share/yinxiangkun/log/libFM/${embedding_size}/${dataset}/"
     fi
