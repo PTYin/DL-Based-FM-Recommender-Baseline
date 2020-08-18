@@ -15,7 +15,8 @@ import metrics
 
 def run(config):
     os.environ['DGLBACKEND'] = 'pytorch'
-    os.environ['CUDA_VISIBLE_DEVICES'] = config['model']['gpu']
+    if config['model']['gpu'] != 'any':
+        os.environ['CUDA_VISIBLE_DEVICES'] = config['model']['gpu']
     torch.backends.cudnn.benchmark = True
 
     if not os.path.exists(config['model']['model_path']):
@@ -107,9 +108,9 @@ def run(config):
         best_result = None
 
     saved = False
+    start_time = time.time()
     for epoch in range(config['model']['epochs']):
         model.train()
-        start_time = time.time()
         loss = 0  # No effect, ignore this line
         for i, (features, feature_values, label) in enumerate(train_loader):
             features = features.cuda()
@@ -129,21 +130,24 @@ def run(config):
             # ---------checkpoint---------
             if i % config['model']['steps_per_checkpoint'] == 0:
                 print(
-                    "Running Epoch {:03d}/{:03d} loss:{:.3f}".format(epoch + 1, config['model']['epochs'], float(loss)),
+                    "Running Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
+                    "loss:{:.3f}".format(float(loss)),
                     "costs:", time.strftime("%H: %M: %S", time.gmtime(time.time() - start_time)))
+                start_time = time.time()
                 sys.stdout.flush()
                 # ----------------------------------Validation----------------------------------
-                if config['model']['evaluation']:
+                if epoch + 1 > config['model']['epochs'] // 5 and config['model']['evaluation']:
                     model.eval()
                     save_flag = False
                     if config['task'] == 'rating':
                         # train_result = metrics.RMSE(model, train_loader)
                         test_result = metrics.RMSE(model, test_loader)
                         if valid_dataset is not None:
-                            valid_result = metrics.RMSE(model, valid_loader)
+                            # valid_result = metrics.RMSE(model, valid_loader)
                             print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
                                   # "Train_RMSE: {:.3f},".format(train_result),
-                                  "Valid_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(valid_result, test_result))
+                                  # "Valid_RMSE: {:.3f},".format(valid_result),
+                                  "Test_RMSE: {:.3f}".format(test_result))
                         else:
                             print("\tRunning Epoch {:03d}/{:03d}".format(epoch + 1, config['model']['epochs']),
                                   # "Train_RMSE: {:.3f},".format(train_result),
@@ -160,18 +164,21 @@ def run(config):
                     else:
                         test_result = best_result  # No effect, ignore this line
 
-                    if save_flag and config['model']['save']:
-                        if 'tag' in config:
-                            torch.save(model, os.path.join(config['model']['model_path'],
-                                                           '{}_{}.pth'.format(config['model']['name'], config['tag'])))
+                    if save_flag:
+                        if config['model']['save']:
+                            if 'tag' in config:
+                                torch.save(model, os.path.join(config['model']['model_path'],
+                                                               '{}_{}.pth'.format(config['model']['name'], config['tag'])))
+                            saved = True
                         best_result = test_result
-                        saved = True
+
                     sys.stdout.flush()
 
     # ----------------------------------Evaluation----------------------------------
     if config['model']['evaluation']:
         print('Evaluating...')
         model.eval()
+        flag = False
         if config['task'] == 'rating':
             train_result = metrics.RMSE(model, train_loader)
             test_result = metrics.RMSE(model, test_loader)
@@ -181,10 +188,20 @@ def run(config):
                                                                                          test_result))
             else:
                 print("Train_RMSE: {:.3f}, Test_RMSE: {:.3f}".format(train_result, test_result))
+
+            flag = test_result < best_result
         elif config['task'] == 'ranking':
             train_result = metrics.RMSE(model, train_loader)
             test_hr, test_ndcg = metrics.metrics(model, test_loader)
+            test_result = (test_hr, test_ndcg)
             print("Train_RMSE: {:.3f}, Test_HR: {:.3f}, Test_NDCG: {:.3f}".format(train_result, test_hr, test_ndcg))
+
+            flag = test_hr > best_result[0]
+        else:
+            test_result = best_result  # No effect, ignore this line
+
+        if flag:
+            best_result = test_result
         print('------Best Result: ', best_result, '------', sep='')
         sys.stdout.flush()
 
@@ -198,7 +215,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
                         type=str,
-                        default='../config_example/DeepFM_load.yaml',
+                        default='../config_backup/XDeepFM.yaml',
                         help='path for configure file')
     args = parser.parse_args()
 
