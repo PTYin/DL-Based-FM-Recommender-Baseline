@@ -136,7 +136,7 @@ def run(config):
                 start_time = time.time()
                 sys.stdout.flush()
                 # ----------------------------------Validation----------------------------------
-                if epoch + 1 > config['model']['epochs'] // 5 and config['model']['evaluation']:
+                if config['model']['evaluation']:
                     model.eval()
                     save_flag = False
                     if config['task'] == 'rating':

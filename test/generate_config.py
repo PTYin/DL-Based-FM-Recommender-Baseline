@@ -20,7 +20,7 @@ model:
   steps_per_checkpoint: 500
   save: True  # save model or not
   model_path: '/home/share/yinxiangkun/saved/{task}/DeepFM/'
-  gpu: '0'  # gpu ID
+  gpu: '2'  # gpu ID
   load: False
   evaluation: True
 
@@ -55,7 +55,7 @@ model:
   steps_per_checkpoint: 500
   save: True  # save model or not
   model_path: '/home/share/yinxiangkun/saved/{task}/XDeepFM/'
-  gpu: '0'  # gpu ID
+  gpu: '2'  # gpu ID
   load: False
   evaluation: True
 
@@ -110,8 +110,8 @@ config_dir = os.path.join('..', 'config_test')
 
 
 def generate(task, model, dataset, embedding_size):
-    if not os.path.exists(os.path.join(config_dir, task, dataset, embedding_size)):
-        os.makedirs(os.path.join(config_dir, task, dataset, embedding_size))
+    if not os.path.exists(os.path.join(config_dir, task, embedding_size, dataset)):
+        os.makedirs(os.path.join(config_dir, task, embedding_size, dataset))
 
     if model == 'DeepFM':
         config = DeepFM_template.format(task=task, dataset=dataset, embedding_size=embedding_size)
@@ -121,12 +121,13 @@ def generate(task, model, dataset, embedding_size):
         config = NGCF_template.format(task=task, dataset=dataset, embedding_size=embedding_size)
     else:
         raise NotImplementedError('model not in the list')
-    open(os.path.join(config_dir, task, dataset, embedding_size, model+'.yaml'), 'w').write(config)
+    open(os.path.join(config_dir, task, embedding_size, dataset, model+'.yaml'), 'w').write(config)
 
 
 if __name__ == '__main__':
     dataset_list = ["automotive", "books", "clothing", "ml-1m", "office", "ticket"]
-    embedding_size_list = [4, 8, 16, 32, 64, 128, 256, 512]
+    # embedding_size_list = [4, 8, 16, 32, 64, 128, 256, 512]
+    embedding_size_list = [256, 512]
     embedding_size_list = list(map(lambda x: str(x), embedding_size_list))
     # ---------------rating---------------
     for dataset in dataset_list:
