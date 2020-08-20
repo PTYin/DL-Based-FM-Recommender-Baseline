@@ -14,7 +14,7 @@ def metrics(model, test_loader, top_k=10):
         # recommends = torch.take(
         # 		item, indices).cpu().numpy().tolist()
 
-        recommends = indices.numpy().tolist()
+        recommends = indices.cpu().numpy().tolist()
 
         if 0 in recommends:
             # HR

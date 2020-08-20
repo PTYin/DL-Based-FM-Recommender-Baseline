@@ -215,7 +215,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
                         type=str,
-                        default='../config_backup/XDeepFM.yaml',
+                        default='../config_example/NGCF.yaml',
                         help='path for configure file')
     args = parser.parse_args()
 
