@@ -20,7 +20,7 @@ model:
   steps_per_checkpoint: 500
   save: True  # save model or not
   model_path: '/home/share/yinxiangkun/saved/{task}/DeepFM/'
-  gpu: '2'  # gpu ID
+  gpu: '3'  # gpu ID
   load: False
   evaluation: True
 
@@ -55,7 +55,7 @@ model:
   steps_per_checkpoint: 500
   save: True  # save model or not
   model_path: '/home/share/yinxiangkun/saved/{task}/XDeepFM/'
-  gpu: '2'  # gpu ID
+  gpu: '3'  # gpu ID
   load: False
   evaluation: True
 

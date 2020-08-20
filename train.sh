@@ -15,8 +15,8 @@ for dataset in ${datasets[@]}; do
     if [ ! -d "/home/share/yinxiangkun/log/libfm/${embedding_size}/${dataset}/" ]; then
       mkdir "/home/share/yinxiangkun/log/libfm/${embedding_size}/${dataset}/"
     fi
-    echo "${config_dir}/${embedding_size}/${dataset}/${model}.yaml"
-#    python app.py --config "${config_dir}/${embedding_size}/${dataset}/${model}.yaml" > "/home/share/yinxiangkun/log/libfm/${embedding_size}/${dataset}/${model}.txt"
+#    echo "${config_dir}/${embedding_size}/${dataset}/${model}.yaml"
+    python app.py --config "${config_dir}/${embedding_size}/${dataset}/${model}.yaml" > "/home/share/yinxiangkun/log/libfm/${embedding_size}/${dataset}/${model}.txt"
   done
 done
 

@@ -17,3 +17,9 @@ Split the data to train/test/validation files to run the codes directly.
 ## Notice
 
 If the parameter num_workers of DataLoader is not equal to 0, please make sure not exec the program in Windows. 
+
+## 运行代码
+```
+    cd src/
+    python main.py --config ../config_example/NGCF.yaml
+```
